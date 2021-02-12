@@ -6,35 +6,38 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RepositoryWorkshopCRUD.Models;
+using RepositoryWorkshopCRUD.Repository;
 
 namespace RepositoryWorkshopCRUD.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/burgers")]
     [ApiController]
-    public class BurgersController : ControllerBase
-    {
-        private readonly BurgerContext _context;
+    public class BurgersController : Controller
 
-        public BurgersController(BurgerContext context)
+    {
+        readonly IBurgerRepository burgerRepository;
+        public BurgersController(IBurgerRepository burgerRepository)
         {
-            _context = context;
+            this.burgerRepository = burgerRepository;
         }
+
 
         // GET: api/Burgers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Burger>>> GetBurgers()
+        public async Task<ActionResult<IEnumerable<Burger>>> GetBurger()
         {
-            //return await _context.Burgers.ToListAsync(); without the DTO model
-            return await _context.Burgers
-                .Select(burgerInstance => burgerInstance)
-                .ToListAsync();
+
+            return await burgerRepository.ListAllBurgers();
+
         }
 
         // GET: api/Burgers/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Burger>> GetBurger(long id)
+        public async Task<ActionResult<Burger>> GetBurger(int id)
         {
-            var burger = await _context.Burgers.FindAsync(id);
+
+            var burger = await burgerRepository.GetBurgerByID(id);
+
             if (burger == null)
             {
                 return NotFound();
@@ -43,35 +46,20 @@ namespace RepositoryWorkshopCRUD.Controllers
             return burger;
         }
 
-        //PUT: api/Burgers/5
+        // PUT: api/Burgers/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutBurger(long id, Burger burger)
+        public async Task<IActionResult> PutBurger(int id, Burger burger)
         {
-            if (id != burger.Id)
             {
-                return BadRequest();
-            }
-
-            _context.Entry(burger).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!BurgerExists(id))
+                if (id != burger.Id)
                 {
-                    return NotFound();
+                    return BadRequest();
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return NoContent();
+                await burgerRepository.UpdateBurger(burger);
+                return NoContent();
+            }
         }
 
         // POST: api/Burgers
@@ -79,31 +67,22 @@ namespace RepositoryWorkshopCRUD.Controllers
         [HttpPost]
         public async Task<ActionResult<Burger>> PostBurger(Burger burger)
         {
-            _context.Burgers.Add(burger);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetBurgers), new { id = burger.Id });
+            await burgerRepository.InsertBurger(burger);
+            return CreatedAtAction("GetBurger", new { id = burger.Id }, burger);
+
         }
 
         // DELETE: api/Burgers/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteBurger(long id)
+        public async Task<ActionResult<Burger>> DeleteBurger(int id)
         {
-            var burger = await _context.Burgers.FindAsync(id);
+            var burger = await burgerRepository.DeleteBurger(id);
             if (burger == null)
             {
                 return NotFound();
             }
-
-            _context.Burgers.Remove(burger);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool BurgerExists(long id)
-        {
-            return _context.Burgers.Any(e => e.Id == id);
+            return burger;
         }
     }
 }

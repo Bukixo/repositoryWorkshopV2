@@ -41,7 +41,7 @@ namespace RepositoryWorkshopCRUD.Repository
             return burger;
         }
 
-        async Task<Burger> IBurgerRepository.DeleteBurger(int id)
+        async Task<Burger> IBurgerRepository.DeleteBurger(long id)
         {
             var burger = await context.Burgers.FindAsync(id);
             if (burger == null)
