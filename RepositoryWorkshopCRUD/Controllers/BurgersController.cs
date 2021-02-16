@@ -32,7 +32,7 @@ namespace RepositoryWorkshopCRUD.Controllers
 
         // GET: api/Burgers/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Burger>> GetBurger(long id)
+        public async Task<ActionResult<Burger>> GetBurger(int id)
         {
             var burger = await _context.Burgers.FindAsync(id);
             if (burger == null)
@@ -46,7 +46,7 @@ namespace RepositoryWorkshopCRUD.Controllers
         //PUT: api/Burgers/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutBurger(long id, Burger burger)
+        public async Task<IActionResult> PutBurger(int id, Burger burger)
         {
             if (id != burger.Id)
             {
@@ -87,7 +87,7 @@ namespace RepositoryWorkshopCRUD.Controllers
 
         // DELETE: api/Burgers/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteBurger(long id)
+        public async Task<IActionResult> DeleteBurger(int id)
         {
             var burger = await _context.Burgers.FindAsync(id);
             if (burger == null)
@@ -101,7 +101,7 @@ namespace RepositoryWorkshopCRUD.Controllers
             return NoContent();
         }
 
-        private bool BurgerExists(long id)
+        private bool BurgerExists(int id)
         {
             return _context.Burgers.Any(e => e.Id == id);
         }
