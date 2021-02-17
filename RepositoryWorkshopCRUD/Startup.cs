@@ -13,6 +13,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using RepositoryWorkshopCRUD.Models;
 using Microsoft.EntityFrameworkCore;
+using RepositoryWorkshopCRUD.Repository;
 
 namespace RepositoryWorkshopCRUD
 {
@@ -30,7 +31,8 @@ namespace RepositoryWorkshopCRUD
         {
 
             services.AddControllers().AddNewtonsoftJson();
-            services.AddDbContext<BurgerContext>(opt => opt.UseInMemoryDatabase("Buger"));
+            services.AddDbContext<BurgerContext>(opt => opt.UseInMemoryDatabase("Burger"));
+            services.AddScoped<IBurgerRepository, BurgerRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
