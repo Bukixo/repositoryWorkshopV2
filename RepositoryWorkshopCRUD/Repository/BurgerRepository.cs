@@ -18,9 +18,9 @@ namespace RepositoryWorkshopCRUD.Repository
         }
 
 
-        Task<List<Burger>> IBurgerRepository.ListAllBurgers()
+        async Task<List<Burger>> IBurgerRepository.ListAllBurgers()
         {
-            return context.Burgers.ToListAsync();
+            return await context.Burgers.ToListAsync();
         }
 
 
