@@ -33,7 +33,7 @@ namespace RepositoryWorkshopCRUD.Repository
         {
             context.Burgers.Add(burger);
             await context.SaveChangesAsync();
-            return burger; /// check what difference this makes.
+            return burger;
         }
 
         async Task<Burger> IBurgerRepository.DeleteBurger(int id)
