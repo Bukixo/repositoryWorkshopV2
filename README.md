@@ -195,11 +195,226 @@ namespace RepositoryWorkshopCRUD
 
             services.AddControllers().AddNewtonsoftJson();
             services.AddDbContext<BurgerContext>(opt => opt.UseInMemoryDatabase("Buger"));
-            <strong>services.AddScoped<IBurgerRepository, BurgerRepository>();</strong>
+            --> services.AddScoped<IBurgerRepository, BurgerRepository>(); <--- added
         }
 
 ```
-        
-        
+The startup.cs file defines the Startup Class which is triggered when our application launches. The ConfigureServices, as the name says, conifguresservices that will be used in the application.
 
+Here we are rreigstering the the repository service. The Addscoped method means that our service is created once per request. When a new request is made, a new instance of our service is created. We are saying that when we make a call to the Interface IBurgerRepository, use the BurgerRepository.
+
+Update Controller
+
+Finally we update our controller
+
+let do a comparesion
+
+Class Setup
+
+without repository
+```
+    private readonly BurgerContext _context;
+        public BurgersController(BurgerContext context)
+        {
+            _context = context;
+        }
+```
+with repository
+
+```
+    private readonly IBurgerRepository burgerRepository;
+        public BurgersController(IBurgerRepository burgerRepository)
+        {
+            this.burgerRepository = burgerRepository;
+        }
+```
+
+Now that we have we are using our repository as the middle man, which means now we are calling our context from the repository, there is no longer any need to define it here.
+Instead we define our repository in order to access all of it's methods that we have defined.
+
+Get request
+
+Before Repository
+```
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Burger>>> GetBurgers()
+        {
+            //return await _context.Burgers.ToListAsync(); without the DTO model
+            return await _context.Burgers
+                .Select(burgerInstance => burgerInstance)
+                .ToListAsync();
+        }
+  ```
+
+After Repository
+```
+[HttpGet]
+        public async Task<ActionResult<IEnumerable<Burger>>> GetBurger()
+        {
+
+            return await burgerRepository.ListAllBurgers();
+
+        }
+ ```
+ 
+ The first thing we notice is how trimmed down our get request is. It no longer directly talks to our context layer. We have lifted all the responsiblity to the repository so now the controller doesn' need to worry about anything but just to make a http request and wait to for our list of burgers to be returned.
+ 
+ 
+ GET BY ID
+ 
+ Before repository
+ ```
+         // GET: api/Burgers/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Burger>> GetBurger(int id)
+        {
+            var burger = await _context.Burgers.FindAsync(id);
+            if (burger == null)
+            {
+                return NotFound();
+            }
+
+            return burger;
+        }
+    ```
+    
+    After Respository
+    
+   ```
+   [HttpGet("{id}")]
+        public async Task<ActionResult<Burger>> GetBurger(int id)
+        {
+
+            var burger = await burgerRepository.GetBurgerByID(id);
+
+            if (burger == null)
+            {
+                return NotFound();
+            }
+
+            return burger;
+        }
+      ```
+      
+      Here, again we are hiding the implementation of the context searching for a burger. Instead all we do l;et our repository search for the burger vbased on the we recieved. To check if burger exsits, we would expect a nonexistent burger to saved as null which returns a not found. Or Altertivelty, If it does exist, we wait for it to be returned.
+      
+       Put 
+       Before repository
+       
+       ```
+               [HttpPut("{id}")]
+        public async Task<IActionResult> PutBurger(int id, Burger burger)
+        {
+            if (id != burger.Id)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(burger).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!BurgerExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+```
+
+       
+   After Repository
+   ```
+           [HttpPut("{id}")]
+        public async Task<IActionResult> PutBurger(int id, Burger burger)
+        {
+            {
+                if (id != burger.Id)
+                {
+                    return BadRequest();
+                }
+
+                await burgerRepository.UpdateBurger(burger);
+                return NoContent();
+            }
+        }
+       
+```
+Post
+
+ Before repository
+ 
+ ```
+         [HttpPost]
+        public async Task<ActionResult<Burger>> PostBurger(Burger burger)
+        {
+            _context.Burgers.Add(burger);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetBurgers), new { id = burger.Id });
+        }
+      ````
+ 
+ after
+ ```
+    [HttpPost]
+        public async Task<ActionResult<Burger>> PostBurger(Burger burger)
+        {
+
+            await burgerRepository.InsertBurger(burger);
+            return CreatedAtAction("GetBurger", new { id = burger.Id }, burger);
+
+        }
+      ```
+
+Delete
+  Before repository
+
+```
+ [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteBurger(int id)
+        {
+            var burger = await _context.Burgers.FindAsync(id);
+            if (burger == null)
+            {
+                return NotFound();
+            }
+
+            _context.Burgers.Remove(burger);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool BurgerExists(int id)
+        {
+            return _context.Burgers.Any(e => e.Id == id);
+        }
+    }
+    
+    After
+    ```
+       // DELETE: api/Burgers/5
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<Burger>> DeleteBurger(int id)
+        {
+            var burger = await burgerRepository.DeleteBurger(id);
+            if (burger == null)
+            {
+                return NotFound();
+            }
+            return burger;
+        }
+    }
+    ```
 
