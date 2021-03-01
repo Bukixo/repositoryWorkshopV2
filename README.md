@@ -350,6 +350,8 @@ After Repository
         }
        
 ```
+As you can see the recurring theme that we have is that chunks of code have moved into the repository. Therefore, in term of our put request, it no longer has to go through the updating, and validation loop of catching an error during the update. Our repository takes care of that. All we do here is check that the burger id is valid, then update it's content in the background.
+
 Post
 
  Before repository
@@ -376,6 +378,8 @@ Post
 
         }
       ```
+     Post method, has been shorted from inrtsuticly adding a burger into the context, to waiting fore the newly added burger to be returned
+     whilst the reposityr does the heavy lifting.
 
 Delete
   Before repository
@@ -417,4 +421,6 @@ Delete
         }
     }
     ```
+    
+    Lastly, similar to the get by id function, we go into our respository and check that the burger exists then remove it.
 
