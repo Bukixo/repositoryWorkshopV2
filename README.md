@@ -1,14 +1,22 @@
-# repositoryWorkshopV2
+Since your controller code is now weakly coupled to the repository (thanks to the interface we introduced) all you need to do in the unit test is to provide some mock implementation on the repository which allows you to define its behavior. 
+# RepositoryWorkshopV2
 
-Here we have a simple crud application that makes a requests to the api that we have defined.
-The controller section oof the App defines the call requests that we make. As you can see it is tightly coupled to the the database context. This could cause problems,
-one of them being going against the SOLID principles in coding - namely the single responsiblity. We do not want out controller to be involved in querying the databse directly.
+Here we have a simple web API project that makes requests to the api that we have defined. The Project consists of a model - which is a class that represents the data that the app manages. Secondly, the database context context, also a class, is the bridge between the model and databse. Using Entity Framework it establishes a connection to the query which allows us to create queries.
+Lastly, the Controller defines the CRUD methods and responds to call requests that we make.
 
-Let us start by refactoring and introducing a repository.
+As it currently stands, the client makes a HTTP request to our app which hits our controller. Our controller then directly queries our
+database using the data access layer which is returned via the model.
+![image](https://user-images.githubusercontent.com/13222112/110297433-61377a80-7feb-11eb-8c64-70791221aa41.png)
 
-## Creating an interface
+Photo: Microsoft, all right reserved.
 
-The first thing we will do is create a new folder called Repository. Next we will define an interface for our repository called IBurgerRepository. That way we can set out a contract to our repository and define exactly which methods will be used in our later BurgerRepository.
+As you can see it is tightly coupled to the the database context. This could cause problems, one of them being going against the SOLID principles in coding - namely the single responsiblity. We do not want out controller to be involved in querying the databse directly. Our controller should not have to care about how our data is is being manipulated. If anything was to go wrong inside the database or we made any changes, as it is now, due to the tight coupling, it could affect our controller. This is something we want to avoid.
+
+Let us start refactoring and introducing a repository.
+
+## Creating an Interface
+
+The first thing we will do is create a new folder called Repository. Next we will define an interface for our repository called IBurgerRepository. That way we can set out a contract to our repository and define exactly which methods will be used in our later BurgerRepository regardless of how it will be implemented.
 ```
 using RepositoryWorkshopCRUD.Models;
 using System;
@@ -32,7 +40,7 @@ namespace RepositoryWorkshopCRUD.Repository
 
 ## Defining the repository
 
-Now that we have our interface, we will create our BurgerRepository, that will inherit from out interface.
+Now that we have our interface, we will create our BurgerRepository, that will inherit from our interface.
 It is here that we will essentially take the code from our controller and edit it slightly in order to make our connection to the database context.
 That way we can ensure our layer between the repository and the service layer.
 
@@ -99,9 +107,9 @@ namespace RepositoryWorkshopCRUD.Repository
 }
 ```
 
-let's break the above code down now line by line!
+Let's break the above code down now line by line!
 
-We firstly, inherit from our interface to get hold of all our methods that will be used.
+We firstly, inherit from our interface to get hold of all our CRUD methods that will be used. Then we instantiate our context.
 
 ```
 public class BurgerRepository : IBurgerRepository
@@ -116,7 +124,7 @@ public class BurgerRepository : IBurgerRepository
         ////
 ```
 
-Here we are defining a get task method to essentially to return a list of type Burger.
+Here we are defining a GET ALL tTsk method to to return a list of type Burger from our database.
 ```
 Task<List<Burger>> IBurgerRepository.ListAllBurgers()
 {
@@ -125,7 +133,7 @@ Task<List<Burger>> IBurgerRepository.ListAllBurgers()
 
 ```
 
-Next, we use the id that we have captured from the user input to search and find and return a burger that matches the id.
+Next, with the GET Task, we use the id that we have captured from the request call to search and return a burger that matches the id.
 ```
 async Task<Burger> IBurgerRepository.GetBurgerByID(int id)
 {
@@ -133,7 +141,7 @@ async Task<Burger> IBurgerRepository.GetBurgerByID(int id)
 }
 ```
 
-As the name of the Task already suggest, we will be adding a new burger into the database
+As the name of the Task already suggest, we will be adding (INSERT) a new burger into the database
 ```
 async Task<Burger> IBurgerRepository.InsertBurger(Burger burger)
 {
@@ -143,7 +151,7 @@ async Task<Burger> IBurgerRepository.InsertBurger(Burger burger)
 }
 ```
 
-To delete a burger, we use the the id provided from the user input and make a search. If the burger is non-existent it will return null, if it is found, using entity framework 
+To DELETE a burger, we use the the id provided from the user input and make a search. If the burger is non-existent it will return null, if it is found, using Entity Framework 
 it will be removed.
 ```
 async Task<Burger> IBurgerRepository.DeleteBurger(int id)
@@ -160,7 +168,7 @@ async Task<Burger> IBurgerRepository.DeleteBurger(int id)
 }
 ```
 
-Lastly, EntityState allows us to make changes and update we make.
+Lastly, EntityState allows us to make changes and updates.
 ```
 async Task<Burger> IBurgerRepository.UpdateBurger(Burger burger)
 {
@@ -195,15 +203,16 @@ namespace RepositoryWorkshopCRUD
 
             services.AddControllers().AddNewtonsoftJson();
             services.AddDbContext<BurgerContext>(opt => opt.UseInMemoryDatabase("Buger"));
-            --> services.AddScoped<IBurgerRepository, BurgerRepository>(); <--- added
+            services.AddScoped<IBurgerRepository, BurgerRepository>(); /// added new service 
         }
+        \\\
 
 ```
-The startup.cs file defines the Startup Class which is triggered when our application launches. The ConfigureServices, as the name says, conifguresservices that will be used in the application.
+The startup.cs file defines the Startup Class which is triggered when our application launches. The ConfigureServices, as the name says, configures services that will be used in the application.
 
-Here we are rreigstering the the repository service. The Addscoped method means that our service is created once per request. When a new request is made, a new instance of our service is created. We are saying that when we make a call to the Interface IBurgerRepository, use the BurgerRepository.
+Here we are registering the the repository service. The Addscoped method means that our service is created once per request. When a new request is made, a new instance of our service is created. We are saying that when we make a call to the Interface IBurgerRepository, use the BurgerRepository.
 
-Update Controller
+##Update Controller
 
 Finally we update our controller
 
